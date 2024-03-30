@@ -1,0 +1,82 @@
+Stand: {
+  shape: "class"
+  cycleId: String?
+  -key: 16 bytes
+
+  getStatus(): StandStatus
+  unlock(user, serverRespEncrypted): StandStatus
+}
+
+App: {
+  shape: "class"
+  user: String
+
+  getServerRespEncrypted(user): ServerRespEncrypted
+  sendUnlockRequest(user, ServerRespEncrypted): StandStatus
+  sendStatusRequest(): StandStatus
+}
+
+Server: {
+  shape: "class"
+  users: [String]
+  cycleIds: [String]
+  key: 16 bytes
+  standLocations: [String]
+
+  sendServerRespEncrypted(user, StandStatus): StandStatusEncrypted
+}
+
+UnlockSequence: {
+  shape: sequence_diagram
+  App -> Stand: StandStatus
+  App -> Server: StandStatus and user id
+  Server -> App: encrypted ServerResponse
+  App -> Stand: user id, encrypted Server Response
+  Stand -> Stand: If ServerResponse and user id is valid, unlock
+  Stand -> App: Any errors and stand status
+  App -> Server: Update the Stand Status on Server
+}
+
+ServerResponseToken: {
+  grid-rows: 1
+  grid-gap: 0
+  IV (16 bytes)
+  ServerResponse: "Encrypted, Seperator: \":\"" {
+    grid-gap: 0
+    grid-rows: 1
+    User Id
+    Cycle Id
+    Time
+  }
+}
+
+StandLifetime: {
+  Wifi On -> TCP Server On -> Setup Key for encryption -> RFID Scanner On -> Setup Relay Pins -> Enter event loop
+  StandEventLoop: {
+    Read Cycle Tag -> Unlock Cycle Timer
+    Unlock Cycle Timer -> Turn Relay On -> Reduce Cycle Timer: Greater than 0
+    Unlock Cycle Timer -> Turn Relay Off: Less than or equal to 0
+    Reduce Cycle Timer -> Check Wifi
+    Turn Relay Off -> Check Wifi
+    Check Wifi -> Try Connecting: Not Connected 
+    Check Wifi -> Handle Data: Connected
+    Try Connecting -> Delay
+    Handle Data -> Delay
+    Delay -> Check Serial
+    Check Serial -> Print MAC Address: Got Command \"m\"
+  }
+  Handle Data: {
+    Start TCP socket -> Read Command
+    Read Command -> Send Status: Command \"g\"
+    Read Command -> Send Status: If cycleTag Empty
+    Read Command -> Read User Id
+    Read User Id -> Read Server Response -> Extract IV -> Verify Server Resp
+    Verify Server Resp -> Send Status -> Unlock Cycle Timer = 10000 -> Clear Cycle Tag: Response Ok
+    Verify Server Resp -> Send Error: Response not OK
+  }
+  Server Response Verification: {
+    Decrypt Server Response -> Match User Id 
+    Match User Id -> Match Cycle Id
+    Match Cycle Id -> Check if time moved forwards -> Return True
+  }
+}
