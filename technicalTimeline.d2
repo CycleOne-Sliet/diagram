@@ -1,0 +1,112 @@
+Monolith Model: "Single controller board which handled communication with app via HTTP over WiFi" {
+  Significant Electronic Components: |`
+    # Significant Electronic Components
+    - Controller Board
+      - Arduino for controlling locks
+      - NodeMCU for communicating with the app via WIFI
+      - NodeMCU for recieving the data from the RFID Scanners
+      - 8 Channel relay board connected to the electronics lock.
+
+    - Stand Units
+      - RFID Scanner for reading the RFID tags on cycles
+      - RFID Controller for sending the RFID tag to the controller board.
+      - Solenoid Lock which are directly controlled by arduino via the relay.
+  `|
+  "Method of Communication: Wifi"
+
+  Advantages: |`
+    # Advantages
+    - Was tested to work
+  `|
+  Disadvantages: |`
+    # Disadvantages
+    - Unreliable due to the communication between arduino, and nodemcus being unreliable and sometimes disconnecting.
+    - Users needed to be provided with the wifi password and ssid, then they needed to manually connect to the wifi to be able to unlock
+    - Anyone could come and unlock any cycle, without any authorization.
+  `|
+
+}
+
+
+Monolith Revision 1: "Rev1: Using bluetooth instead of wifi for sending and recieving commands from the app" {
+  Advantages: |`
+    # Advantages
+    - Users could scan a code to get the mac address and connect that way
+  `|
+  Disadvantages: |`
+    # Disadvantages
+    - Added even more vulnerability, as not even a password was needed, and bluetooth traffic can be easily listened to by a third party.
+  `|
+}
+
+Monolith Model -> Monolith Revision 1
+
+Independent Model: "Independent Model: Each individual cycle stand handled all the responsibilities that the controller board had" {
+  Significant Electronic Components: |`
+    # Significant Electronic Components
+    - Stand Units
+      - RFID Scanner for reading tags
+      - Solenoid Lock
+      - Relay as a switch for the lock
+      - Stand Controller for 
+        - Communicating with the app
+        - Locking or unlocking via relay
+        - Storing the value of cycle tag
+  `|
+
+  "Method of communication: Bluetooth"
+
+  Advantages: |`
+    # Advantages
+    - Users could scan a qr code to get the status, or unlock the stand.
+    - Removed the contoller board, and due to this, the unreliability because of the data communication between the difference controllers was also removed.
+  `|
+  Disadvantages: |`
+    # Disadvantages
+    - It still suffered the same problems as the Monolith Revision 1, i.e. Data could be easily read by anybody and stand could be unlocked
+  `|
+}
+
+Independent Model Communication Prototyping: "Prototyping: The things that were tried and then dropped for the communication method between app and stand" {
+  WiFi NAN: {
+    Advantages: |`
+      # Advantages
+      - Ease of use bluetooth
+      - Security and reliability of WiFi
+    `|
+    Disadvantages: |`
+      # Disadvantages
+      - No support for NodeMCU, even though support was added for the esp32, it wasn't backported
+    `|
+  }
+
+  WiFi with TCP Sockets: {
+    Advantages: |`
+      # Advantages
+      - No need to setup a webserver for sending and recieving data.
+      - Ability to configure to make sure that the internet is not routed through the wifi
+    `|
+    Disadvantages: |`
+      # Disadvantages
+      - Unreliable, probably because of programming error, worth investigating later.
+      - Unexpectedly disconnecting, leading the app or nodemcu to crash.
+    `|
+  }
+
+  WiFi NAN -> WiFi with TCP Sockets
+  
+  Android Connectivity Manager: {
+    Advantages: |`
+      # Advantages
+      - Can use regular http methods and protocol for communication with stand
+      - Reliably works after testing.
+    `|
+    Disadvantages: |`
+      # Disadvantages
+      - Only available after Android 10
+    `|
+  }
+
+  WiFi with TCP Sockets -> Android Connectivity Manager
+
+}
