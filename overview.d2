@@ -26,6 +26,12 @@ Server: {
   sendServerRespEncrypted(user, StandStatus): StandStatusEncrypted
 }
 
+StandStatus: {
+  shape: "class"
+  cycleUnlocked: bool
+  cycleId: String?
+}
+
 UnlockSequence: {
   shape: sequence_diagram
   App -> Stand: StandStatus
