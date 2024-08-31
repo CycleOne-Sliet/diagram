@@ -78,7 +78,15 @@ Data Packet obtained by encrypting the following structure:
 | `userIdLen` (1 byte) | `cycleIdLen`(1 byte) | `userId` (`userIdLen` bytes) | `cycleId` (`cycleIdLen` bytes) | standMacAddress (6 byte) | time (8 byte) (big endian) |
 | -- | -- | -- | -- | -- | -- |
 
-| `IV` (16 bytes) | `Data Packet` ((userIdLen + cycleIdLen) + 32 - (userIdLen + cycleIdLen + 14) % 16)
+| `IV` (16 bytes) | `Data Packet` ((userIdLen + cycleIdLen) + 32 - (userIdLen + cycleIdLen + 16) % 16)
 | -- | -- |
 
 
+StandResponse: Intended to be only readable via the backend, structures as follows
+
+Data Packet obtained by encrypting the following structure:
+| `cycleIdLen` (1 byte) | `cycleId` (`cycleIdLen` bytes) | standMacAddress (6 byte) | time (8 byte) (big endian) |
+| -- | -- | -- | -- |
+
+| `IV` (16 bytes) | `Data Packet` (cycleIdLen + 31 - (cycleIdLen + 15) % 16)
+| -- | -- |
